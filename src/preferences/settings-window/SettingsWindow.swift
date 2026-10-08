@@ -528,11 +528,12 @@ class SettingsWindow: NSWindow {
             // too far in.
             sidebarScrollView.leadingAnchor.constraint(equalTo: parent.leadingAnchor),
             sidebarScrollView.trailingAnchor.constraint(equalTo: parent.trailingAnchor),
-            sidebarScrollView.bottomAnchor.constraint(equalTo: upgradeButton.topAnchor, constant: -10),
+            sidebarScrollView.bottomAnchor.constraint(equalTo: quitButton.topAnchor, constant: -10),
         ])
     }
 
     private func setupUpgradeButton(_ parent: NSView) {
+        upgradeButton.isHidden = true
         upgradeButton.target = self
         upgradeButton.action = #selector(upgradeButtonClicked)
         upgradeButton.translatesAutoresizingMaskIntoConstraints = false

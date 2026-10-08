@@ -125,6 +125,7 @@ class LicenseManager {
     }
 
     func initialize() {
+        onBeforeProUnlock() // fork: restore Pro prefs snapshotted when a trial locked; idempotent
         state = computeState()
         scheduleAsyncRevalidationIfNeeded()
     }
@@ -216,6 +217,7 @@ class LicenseManager {
         #if DEBUG
         if hasMockedLicense { return state }
         #endif
+        if true { return .pro } // fork: permanently Pro
         if keychain.value(account: Self.keychainKeyAccount) != nil {
             let lastValidationResult = defaults.bool(forKey: "lastValidationResult")
             guard lastValidationResult else { return .trialExpired }
@@ -242,6 +244,7 @@ class LicenseManager {
     }
 
     func scheduleAsyncRevalidationIfNeeded() {
+        if true { return } // fork: never contact the license server
         let lastValidation = defaults.double(forKey: "lastValidation")
         let elapsed = clock.now.timeIntervalSince1970 - lastValidation
         guard elapsed >= Self.revalidationInterval else { return }
