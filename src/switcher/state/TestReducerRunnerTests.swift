@@ -357,6 +357,51 @@ final class TestReducerRunnerTests: XCTestCase {
                           "borrowed the stale Space of the window's pre-fullscreen life: \(harness.trace)")
     }
 
+    // MARK: thumbnail borrowing by a group's representative
+
+    /// Tab 1 represents the group (focused last, visible Space); tab 2 is a background tab.
+    private func tabPair(bundleIdentifier: String, thumbnails: (rep: Bool, background: Bool)) -> TrackedWindowState {
+        var rep = window(1, spaceIds: [3], lastFocusOrder: 0)
+        rep.hasThumbnail = thumbnails.rep
+        var background = window(2, lastFocusOrder: 1)
+        background.hasThumbnail = thumbnails.background
+        var s = state(windows: [rep, background])
+        s.apps[500] = TrackedApp(state: ApplicationState(pid: 500, bundleIdentifier: bundleIdentifier,
+            localizedName: "App", isHidden: false), isActive: true)
+        s.formGroup([1, 2], representative: 1, reason: "fixture")
+        return s
+    }
+
+    private func copiesAThumbnail(_ effects: [ReducerEffect]) -> Bool {
+        effects.contains { if case .copyThumbnail = $0 { return true } else { return false } }
+    }
+
+    /// A sibling's capture is another terminal's content: an uncaptured Ghostty tab shows the icon, not a neighbour.
+    func testUncapturedGhosttyRepresentativeDoesNotBorrowASiblingsThumbnail() {
+        var s = tabPair(bundleIdentifier: GhosttyTabPolicy.bundleId, thumbnails: (rep: false, background: true))
+        let effects = WindowEventReducer.reconcile(&s)
+        XCTAssertFalse(copiesAThumbnail(effects))
+        XCTAssertEqual(s.window(1)?.hasThumbnail, false)
+    }
+
+    func testUncapturedRepresentativeOfAnotherAppStillBorrowsASiblingsThumbnail() {
+        var s = tabPair(bundleIdentifier: "com.apple.Terminal", thumbnails: (rep: false, background: true))
+        let effects = WindowEventReducer.reconcile(&s)
+        XCTAssertTrue(copiesAThumbnail(effects))
+        XCTAssertEqual(s.window(1)?.hasThumbnail, true)
+    }
+
+    func testGhosttyTabsKeepTheirOwnThumbnailsAcrossATabSwitch() {
+        var s = tabPair(bundleIdentifier: GhosttyTabPolicy.bundleId, thumbnails: (rep: true, background: true))
+        s.windows[0].lastFocusOrder = 1
+        s.windows[1].lastFocusOrder = 0
+        let effects = WindowEventReducer.reconcile(&s)
+        XCTAssertEqual(s.groups.groupId(of: 2).flatMap { s.groups.representativeByGroup[$0] }, 2)
+        XCTAssertFalse(copiesAThumbnail(effects))
+        XCTAssertEqual(s.window(1)?.hasThumbnail, true)
+        XCTAssertEqual(s.window(2)?.hasThumbnail, true)
+    }
+
     /// The minted-tab pairing must require the SAME Space. It is a time-based pair — an untracked wid joins,
     /// a representative leaves a beat later — so without matching the Space, a tab joining one window's
     /// fullscreen Space gets paired with an unrelated window's representative leaving the windowed Space, and

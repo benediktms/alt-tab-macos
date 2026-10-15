@@ -152,6 +152,13 @@ report a violation. These are tests OF the harness, not of the reducer.
 - **testRepresentativeDoesNotBorrowASpaceItJustLeft** — a representative going Space-less must not borrow a
   Space that CONTRADICTS the one it just left (a tab left over from the window's pre-fullscreen life still
   carries the old windowed Space).
+- **testUncapturedGhosttyRepresentativeDoesNotBorrowASiblingsThumbnail** — a sibling's pixels are another
+  terminal's content, so a never-captured Ghostty tab keeps no thumbnail (the tile draws the icon) and `hasThumbnail`
+  matches the pixels it owns.
+- **testUncapturedRepresentativeOfAnotherAppStillBorrowsASiblingsThumbnail** — every other app keeps the placeholder
+  that spares its tile the icon flash.
+- **testGhosttyTabsKeepTheirOwnThumbnailsAcrossATabSwitch** — a tab switch moves the representative role only; both
+  tabs keep their own pixels and none are copied.
 - **testMintedTabPairingIgnoresARepresentativeLeavingAnotherSpace** — the minted-tab pairing is by TIME, so
   it must also require the same Space, or a tab joining one window's fullscreen Space pairs with an unrelated
   window's representative leaving the windowed one.

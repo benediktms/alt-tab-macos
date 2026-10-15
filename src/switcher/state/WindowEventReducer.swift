@@ -1732,7 +1732,7 @@ enum WindowEventReducer {
     ///   tile shows, screen attribution) is wrong for the discovery gap;
     /// - a thumbnail, when it's freshly active and its own capture hasn't landed — else the tile flashes the
     ///   app icon (`TileView` renders the icon exactly when `thumbnail == nil`). The pixels move in the shell
-    ///   (`ReducerEffect.copyThumbnail`); the state only tracks that a thumbnail now exists.
+    ///   (`ReducerEffect.copyThumbnail`); the state only tracks that a thumbnail now exists. Not for Ghostty.
     /// The CGS phantom latch is dropped: a verdict taken while this tab was mid-transition must not outlive
     /// the group (the derived group-member exemption covers it only while it stays grouped).
     /// `memberWids` is the group's PRE-shrink member list — sources are looked up against the CURRENT state,
@@ -1759,7 +1759,8 @@ enum WindowEventReducer {
             state.windows[ri].spaceIsBorrowed = true
         }
         state.windows[ri].cgsPhantomLatch = false
-        if !state.windows[ri].hasThumbnail,
+        // a Ghostty tab's pixels are its own: a sibling's capture is another terminal, so it shows the icon until captured
+        if !state.windows[ri].hasThumbnail, !GhosttyTabPolicy.isGhostty(state.appState(state.windows[ri].pid)),
            let src = memberWids.compactMap({ state.window($0) }).first(where: { $0.hasThumbnail }),
            let srcWid = src.wid {
             state.windows[ri].hasThumbnail = true

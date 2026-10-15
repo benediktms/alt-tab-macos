@@ -50,8 +50,18 @@ class Windows {
 
     static func shouldDisplay(_ window: Window) -> Bool {
         let query = SwitcherSession.current?.searchQuery ?? ""
-        if window is VirtualTabWindow && Search.normalizedQuery(query).isEmpty { return false }
-        return window.shouldShowTheUser && Search.matches(window, query: query)
+        let searching = !Search.normalizedQuery(query).isEmpty
+        if window is VirtualTabWindow && !searching { return false }
+        // judged against the live query, not a cached flag: typing repaints without `updatesBeforeShowing`
+        return (window.shouldShowTheUser || (searching && isGhosttySearchCandidate(window))) && Search.matches(window, query: query)
+    }
+
+    /// A live inactive Ghostty tab: a search must reach it whether or not the shortcut groups tabs.
+    private static func isGhosttySearchCandidate(_ window: Window) -> Bool {
+        guard GhosttyTabPolicy.isGhostty(window.application.state),
+              let gid = window.cgWindowId.flatMap({ TabGroups.groupId(of: $0) }) else { return false }
+        return GhosttyTabPolicy.isSearchableInactiveTab(window.state, window.application.state,
+            isAlive: window.lifecycle == .alive, groupHasScreenClaim: TabGroups.hasScreenClaim(gid))
     }
 
     /// Tabs live outside the reducer's books: no wid, no `lastFocusOrder` slot.
@@ -886,6 +896,7 @@ class Windows {
                 recentlyCreatedWindows.remove(wid)
                 windowsPendingSpaceRemoval.removeValue(forKey: wid)
                 windowsHeldVisibleForTab.remove(wid)
+                GhosttyTabPolicy.captureGate.update(wid, shown: false)
                 // deliberately no `WindowServerEvents.unsubscribe`: leaving the model doesn't mean the wid is
                 // gone from the WindowServer, and a wid that comes back only announces itself through the
                 // per-window events that opt-in carries.

@@ -136,6 +136,20 @@ content they show is never written anywhere or logged).
 - **Display.** `OrcaTabWindow` copies the cached `CALayerContents` and window size into `thumbnail`/`size`, so the
   existing tile layout draws it; a tab never seen on screen keeps the app icon.
 
+## Ghostty native tabs
+
+Ghostty gives every tab its own native window, so its tabs are **not** virtual entries: each is an ordinary
+`Window` (same wid, same `TabGroups` membership, focused through the ordinary native `Window.focus`, no Automation
+permission, no IPC). `GhosttyTabPolicySpecs.md` has the rules; how they differ from the entries above:
+
+- **Search.** With a non-empty query, a live inactive Ghostty tab is listed even when the shortcut groups tabs and
+  whatever its Space, screen or the one-window-per-app setting. The active tab stays its group's single ordinary row.
+  With an empty query nothing changes: grouped listing still shows only the active tab.
+- **Previews.** One cached picture per tab, kept on its own `Window` and captured only while that tab is shown; no
+  picture is ever copied from a sibling, and selecting an inactive result requests no capture. A tab never captured
+  while shown draws the app icon. Delayed captures are dropped if the tab was hidden, closed or replaced meanwhile.
+- **Window actions** (close, minimize, quit) act on that native window like any other.
+
 ## Test scenarios
 
 Mirrors `BrowserTabsTests.swift` (the parsing, pairing, cache policy and URL normalization in `BrowserTabsTestable.swift`).

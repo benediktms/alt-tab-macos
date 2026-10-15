@@ -115,6 +115,8 @@ Mirrors `WindowFilterResolverTests.swift` 1:1. Each test flips one knob from an 
 ### I. Tabs (macOS native tabs)
 - **testNonFrontmostTabHiddenWhenGrouping** — a non-frontmost tab is hidden when tabs are grouped.
 - **testTabbedShownWhenSeparateTabs** — shown when "tabs as separate windows" is set.
+- **testInactiveGhosttyTabIsStillHiddenWhenGrouping** — the filter is app-agnostic: a Ghostty inactive tab follows
+  the tab grouping like any native tab. Search reaches it through `GhosttyTabPolicy`, not here.
 
 ### J. Combinations
 - **testAllFiltersOnAndWindowPassesEachShows** — every filter on, a window that satisfies all of them shows.

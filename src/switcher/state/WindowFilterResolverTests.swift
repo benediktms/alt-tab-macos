@@ -202,6 +202,14 @@ final class WindowFilterResolverTests: XCTestCase {
                                                       separateTabs: true, isOnPreferredScreen: true))
     }
 
+    /// Ghostty's inactive tabs reach a search through `GhosttyTabPolicy`; the ordinary filter stays app-agnostic.
+    func testInactiveGhosttyTabIsStillHiddenWhenGrouping() {
+        XCTAssertFalse(WindowFilterResolver.shouldShow(ws(isTabbed: true), appState(bundleIdentifier: GhosttyTabPolicy.bundleId),
+                                                       separateTabs: false, isOnPreferredScreen: true))
+        XCTAssertTrue(WindowFilterResolver.shouldShow(ws(isTabbed: true), appState(bundleIdentifier: GhosttyTabPolicy.bundleId),
+                                                      separateTabs: true, isOnPreferredScreen: true))
+    }
+
     // MARK: - J. Combinations
 
     func testAllFiltersOnAndWindowPassesEachShows() {

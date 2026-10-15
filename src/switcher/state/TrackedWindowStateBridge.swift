@@ -160,10 +160,14 @@ class TrackedWindowStateBridge {
             }
             return byId?[mw.id]
         }
+        var ghosttyWindows = [Window]()
         for mw in state.windows {
             guard let w = liveWindow(mw) else { continue }
             w.adopt(mw)
+            if GhosttyTabPolicy.isGhostty(w.application.state) { ghosttyWindows.append(w) }
         }
+        // after every record is adopted: a group's claim to the screen reads its siblings' Spaces
+        ghosttyWindows.forEach { CaptureClaim.reconcile($0) }
     }
 
     /// Execute the reducer's effect list with the same calls the adapters used to make inline.
