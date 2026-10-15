@@ -1,6 +1,27 @@
 import Cocoa
 import ScreenCaptureKit
 
+/// What a captured window was known to show when its capture was requested, naming the tab cache that files the
+/// pixels once the capture is accepted.
+enum PreviewStamp {
+    case browser(BrowserTabsTestable.Stamp)
+    case orca(OrcaTabsTestable.Stamp)
+
+    /// Main-thread, at request time.
+    static func of(_ window: Window) -> PreviewStamp? {
+        if let stamp = OrcaTabs.stamp(window) { return .orca(stamp) }
+        return BrowserTabs.stamp(window).map { .browser($0) }
+    }
+
+    /// Main-thread, only with a capture `Window.refreshThumbnail` accepted.
+    func captured(_ window: Window, _ contents: CALayerContents) {
+        switch self {
+            case .browser(let stamp): BrowserTabs.captured(window, contents, stamp)
+            case .orca(let stamp): OrcaTabs.captured(window, contents, stamp)
+        }
+    }
+}
+
 @available(macOS 14.0, *)
 class WindowCaptureScreenshots {
     // SCShareableContent.getExcludingDesktopWindows is expensive for the OS; we cache as much as possible.
@@ -28,6 +49,7 @@ class WindowCaptureScreenshots {
         let scaleFactor: CGFloat
         let isFullscreen: Bool
         let fullRes: Bool
+        let previewStamp: PreviewStamp?
     }
 
     private struct PendingCapture {
@@ -50,7 +72,7 @@ class WindowCaptureScreenshots {
             guard let wid = window.cgWindowId, let size = window.size else { continue }
             let scaleFactor = WindowThumbnails.captureScaleFactor(window)
             requests[wid] = CaptureRequest(window: window, size: size, scaleFactor: scaleFactor,
-                isFullscreen: window.isFullscreen, fullRes: fullRes)
+                isFullscreen: window.isFullscreen, fullRes: fullRes, previewStamp: fullRes ? nil : PreviewStamp.of(window))
         }
         guard !requests.isEmpty else { return }
         let prioritized = prioritizedIds ?? []
@@ -206,16 +228,16 @@ class WindowCaptureScreenshots {
                 // that one case stays on captureSampleBuffer. Its CGImage copy (vs a shared IOSurface) is acceptable
                 // even at full resolution now that Preview frames are fetched lazily, a few per session (#5861).
                 if #available(macOS 26.0, *), !request.isFullscreen {
-                    captureScreenshot(filter, config, window, source, request.fullRes, finish)
+                    captureScreenshot(filter, config, window, source, request.fullRes, request.previewStamp, finish)
                 } else {
-                    captureSampleBuffer(filter, config, window, source, request.fullRes, finish)
+                    captureSampleBuffer(filter, config, window, source, request.fullRes, request.previewStamp, finish)
                 }
             }
         }
     }
 
     @available(macOS 26.0, *)
-    private static func captureScreenshot(_ filter: SCContentFilter, _ streamConfig: SCStreamConfiguration, _ window: Window, _ source: RefreshCausedBy, _ fullRes: Bool, _ finish: @escaping () -> Void) {
+    private static func captureScreenshot(_ filter: SCContentFilter, _ streamConfig: SCStreamConfiguration, _ window: Window, _ source: RefreshCausedBy, _ fullRes: Bool, _ previewStamp: PreviewStamp?, _ finish: @escaping () -> Void) {
         let config = SCScreenshotConfiguration()
         config.width = streamConfig.width
         config.height = streamConfig.height
@@ -228,21 +250,21 @@ class WindowCaptureScreenshots {
             // fullscreen transition, and the next refresh re-routes it. Retrying here would silently reintroduce
             // the stream churn this path exists to avoid, and would hide new failure modes from the logs.
             guard let cgImage = output?.sdrImage, error == nil else { Logger.error { "\(window.debugId) \(output == nil) \(error)" }; return }
-            deliver(window, source, .cgImage(cgImage), fullRes)
+            deliver(window, source, .cgImage(cgImage), fullRes, previewStamp)
         }
     }
 
-    private static func captureSampleBuffer(_ filter: SCContentFilter, _ config: SCStreamConfiguration, _ window: Window, _ source: RefreshCausedBy, _ fullRes: Bool, _ finish: @escaping () -> Void) {
+    private static func captureSampleBuffer(_ filter: SCContentFilter, _ config: SCStreamConfiguration, _ window: Window, _ source: RefreshCausedBy, _ fullRes: Bool, _ previewStamp: PreviewStamp?, _ finish: @escaping () -> Void) {
         SCScreenshotManager.captureSampleBuffer(contentFilter: filter, configuration: config) { [weak window] sampleBuffer, error in
             finish()
             guard let window else { return }
             guard let sampleBuffer, error == nil else { Logger.error { "\(window.debugId) \(sampleBuffer == nil) \(error)" }; return }
             guard let pixelBuffer = sampleBuffer.pixelBuffer() ?? sampleBuffer.imageBuffer else { Logger.error { "\(window.debugId) no pixelBuffer" }; return }
-            deliver(window, source, .pixelBuffer(pixelBuffer), fullRes)
+            deliver(window, source, .pixelBuffer(pixelBuffer), fullRes, previewStamp)
         }
     }
 
-    private static func deliver(_ window: Window, _ source: RefreshCausedBy, _ contents: CALayerContents, _ fullRes: Bool) {
+    private static func deliver(_ window: Window, _ source: RefreshCausedBy, _ contents: CALayerContents, _ fullRes: Bool, _ previewStamp: PreviewStamp?) {
         guard source != .refreshOnlyThumbnailsAfterShowUi || SwitcherSession.isActive else { return }
         DispatchQueue.main.async { [weak window] in
             guard let window, source != .refreshOnlyThumbnailsAfterShowUi || SwitcherSession.isActive else { return }
@@ -258,7 +280,7 @@ class WindowCaptureScreenshots {
                     PreviewPanel.updateIfShowing(wid, contents, position, size)
                 }
             } else {
-                window.refreshThumbnail(contents)
+                if window.refreshThumbnail(contents) { previewStamp?.captured(window, contents) }
             }
         }
     }
@@ -276,13 +298,15 @@ class WindowCaptureScreenshotsPrivateApi {
         for window in sorted {
             guard let wid = window.cgWindowId else { continue }
             let isPrioritized = prioritized.contains(wid)
+            let previewStamp = PreviewStamp.of(window)
             Applications.screenshotThrottler.throttleOrProceed(key: "capture-wid-\(wid)", queue: BackgroundWork.screenshotsQueue, priority: isPrioritized ? .high : .normal) { [weak window] in
                 guard source != .refreshOnlyThumbnailsAfterShowUi || SwitcherSession.isActive else { return }
                 guard let wid = window?.cgWindowId, let cgImage = oneTimeCapture(wid) else { return }
                 guard source != .refreshOnlyThumbnailsAfterShowUi || SwitcherSession.isActive else { return }
                 DispatchQueue.main.async { [weak window] in
                     guard source != .refreshOnlyThumbnailsAfterShowUi || SwitcherSession.isActive else { return }
-                    window?.refreshThumbnail(.cgImage(cgImage))
+                    guard let window, window.refreshThumbnail(.cgImage(cgImage)) else { return }
+                    previewStamp?.captured(window, .cgImage(cgImage))
                 }
             }
         }

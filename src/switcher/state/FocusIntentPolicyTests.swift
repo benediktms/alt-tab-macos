@@ -194,6 +194,18 @@ final class FocusIntentPolicyTests: XCTestCase {
         XCTAssertNil(policy.awaitedAnswer(now: 0.3), "nothing was asked of an app, so nothing is awaited")
     }
 
+    func testASupersessionTokenIsNewestUntilAnotherFocusOrSupersessionFollows() {
+        var policy = FocusIntentPolicy()
+        let first = policy.supersede()
+        XCTAssertTrue(policy.isNewest(first))
+        _ = policy.request(wid: 1, pid: safari, now: 0)
+        XCTAssertFalse(policy.isNewest(first))
+        let second = policy.supersede()
+        XCTAssertTrue(policy.isNewest(second))
+        policy.supersede()
+        XCTAssertFalse(policy.isNewest(second))
+    }
+
     /// The switch is awaited from the request until the app it aimed at answers. Only that app can: a read
     /// about anyone else says nothing about where this switch landed.
     func testASwitchIsAwaitedUntilItsOwnAppAnswers() {

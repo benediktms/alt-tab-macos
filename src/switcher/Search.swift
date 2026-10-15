@@ -22,11 +22,12 @@ final class Search {
     private static func ensureCache(for window: Window, normalizedQuery normalized: String, originalQuery: String) {
         let cacheKey = normalized + "|3|" + originalQuery
         if window.lastSearchQuery == cacheKey { return }
-        let appName = window.application.localizedName ?? ""
+        let tab = window as? VirtualTabWindow
+        let appName = tab?.searchableSecondary ?? window.application.localizedName ?? ""
         let title = window.title
         let appResult = SearchTestable.tierMatch(query: originalQuery, text: appName)
         let titleResult = SearchTestable.tierMatch(query: originalQuery, text: title)
-        window.swAppMatchSpan = appResult?.span
+        window.swAppMatchSpan = tab == nil ? appResult?.span : nil
         window.swTitleMatchSpan = titleResult?.span
         let appScore = Double(appResult?.score ?? 0)
         let titleScore = Double(titleResult?.score ?? 0)

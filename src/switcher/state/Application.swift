@@ -188,7 +188,7 @@ class Application: NSObject {
     }
 
     private func canShowWindowlessPlaceholder() -> Bool {
-        let ownWindows = Windows.list.filter { $0.application.pid == state.pid }
+        let ownWindows = Windows.list.filter { $0.application.pid == state.pid && !($0 is VirtualTabWindow) }
         return WindowlessApplicationResolver.shouldCreate(
             isRegular: activationPolicy == .regular,
             isTerminated: isTerminated,

@@ -74,13 +74,13 @@ class CliServer {
     private static func executeCommandAndSendReponse_(_ rawValue: String) -> Codable {
         if rawValue == "--list" {
             return JsonWindowList(windows: Windows.list
-                .filter { !$0.isWindowlessApp }
+                .filter { !$0.isWindowlessApp && !($0 is VirtualTabWindow) }
                 .map { JsonWindow(id: $0.cgWindowId, title: $0.title) }
             )
         }
         if rawValue == "--detailed-list" {
             return JsonWindowFullList(windows: Windows.list
-                .filter { !$0.isWindowlessApp }
+                .filter { !$0.isWindowlessApp && !($0 is VirtualTabWindow) }
                 .map {
                     JsonWindowFull(
                         id: $0.cgWindowId,

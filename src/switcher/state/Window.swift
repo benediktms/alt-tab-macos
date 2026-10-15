@@ -134,6 +134,19 @@ class Window {
         Logger.debug { self.debugId }
     }
 
+    init(tabOf application: Application, id: String, title: String) {
+        tracked = TrackedWindow(id: id, wid: nil, pid: application.pid, spaceIds: [], spaceIndexes: [])
+        admissionEvidence = .discovery
+        semanticSurface = nil
+        self.application = application
+        self.title = title
+        self.lastFocusOrder = Int.max / 2
+        Window.globalCreationCounter += 1
+        self.creationOrder = Window.globalCreationCounter
+        debugId = "\(application.debugId) (tab:\(title))"
+        application.fetchAppIcon()
+    }
+
     deinit {
         // debug, not info: `TrackedWindowState.removalLog` already names every removal WITH the reason that
         // condemned it, which is the whole point of logging one (#5785)
@@ -233,12 +246,14 @@ class Window {
         WindowElementAcquisition.element(for: wid, pid: pid, route: .otherSpaceViaBruteForce)
     }
 
-    func refreshThumbnail(_ screenshot: CALayerContents) {
+    /// Returns whether the frame was taken (false = partial frame dropped, a re-capture is on its way).
+    @discardableResult
+    func refreshThumbnail(_ screenshot: CALayerContents) -> Bool {
         // a frame the OS drew mid-animation is much smaller than this window: keep the previous thumbnail,
         // stale but correct, while another capture is asked for (`WindowThumbnails.acceptCapture`)
-        guard WindowThumbnails.acceptCapture(self, screenshot) else { return }
+        guard WindowThumbnails.acceptCapture(self, screenshot) else { return false }
         thumbnail = screenshot
-        if !SwitcherSession.isActive || !shouldShowTheUser { return }
+        if !SwitcherSession.isActive || !shouldShowTheUser { return true }
         if let position = self.position, let size = self.size,
            let view = (TilesView.recycledViews.first { $0.window_?.cgWindowId == cgWindowId }) {
             if !view.thumbnail.isHidden {
@@ -256,6 +271,7 @@ class Window {
                 PreviewPanel.updateIfShowing(cgWindowId, screenshot, position, size)
             }
         }
+        return true
     }
 
     func canBeClosed() -> Bool {
@@ -727,4 +743,15 @@ class Window {
             }
         }
     }
+}
+
+/// A virtual tab entry (`BrowserTabWindow`, `OrcaTabWindow`) living in `Windows.list`: no CGWindowID, never reaches
+/// the reducer, and displayed only while a search query is active.
+class VirtualTabWindow: Window {
+    /// Matched in place of the app name, so searching the app's name does not list every tab.
+    var searchableSecondary: String { "" }
+
+    override func canBeClosed() -> Bool { false }
+
+    override func canBeMinDeminOrFullscreened() -> Bool { false }
 }

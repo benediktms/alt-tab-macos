@@ -130,6 +130,9 @@ focus. `testDeferredRaiseStopsAfterTheDeadlineOrANewerAltTab` covers delayed and
   second apart; a repair issued between them does not cover the raise, and the operation still owes one.
 - **testSupersedingWithoutATargetStopsPendingOpsAndOwesNoRepair** — the windowless-app and own-window routes:
   everything pending stops, and no wid is re-asserted because none was named.
+- **testASupersessionTokenIsNewestUntilAnotherFocusOrSupersessionFollows** — `supersede()` returns a token;
+  `isNewest` is false once any later request or supersession exists. Work whose target is known only when an IPC
+  reply lands (an Orca tab) checks it before raising, so a slow reply cannot override a newer focus.
 - **testASwitchIsAwaitedUntilItsOwnAppAnswers** — only the app the switch aimed at can say where it landed, so
   a read about anyone else leaves the wait standing.
 - **testAnAnswerNamingAnotherWindowOfTheAwaitedAppIsAskedAgain** — the read beat the app to its own key

@@ -222,6 +222,14 @@
 		AA0C8A1000000000000000B1 /* CGSCallScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0C8A0000000000000000B1 /* CGSCallScheduler.swift */; };
 		AA0C8A1000000000000000B2 /* ProcessCallScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0C8A0000000000000000B2 /* ProcessCallScheduler.swift */; };
 		AA0C8B000000000000000001 /* UsageStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0C8B000000000000000002 /* UsageStats.swift */; };
+		BB7AB5000000000000000001 /* BrowserTabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7AB5000000000000000002 /* BrowserTabs.swift */; };
+		BB7AB5000000000000000005 /* BrowserTabsTestable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7AB5000000000000000003 /* BrowserTabsTestable.swift */; };
+		BB7AB5000000000000000006 /* BrowserTabsTestable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7AB5000000000000000003 /* BrowserTabsTestable.swift */; };
+		BB7AB5000000000000000007 /* BrowserTabsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7AB5000000000000000004 /* BrowserTabsTests.swift */; };
+		BB7AB500000000000000000B /* OrcaTabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7AB5000000000000000008 /* OrcaTabs.swift */; };
+		BB7AB500000000000000000C /* OrcaTabsTestable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7AB5000000000000000009 /* OrcaTabsTestable.swift */; };
+		BB7AB500000000000000000D /* OrcaTabsTestable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7AB5000000000000000009 /* OrcaTabsTestable.swift */; };
+		BB7AB500000000000000000E /* OrcaTabsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7AB500000000000000000A /* OrcaTabsTests.swift */; };
 		AA0C8B000000000000000003 /* UsageStatsTestable.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0C8B000000000000000004 /* UsageStatsTestable.swift */; };
 		AA0C8B000000000000000005 /* UsageStatsTestable.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0C8B000000000000000004 /* UsageStatsTestable.swift */; };
 		AA0C8B000000000000000011 /* MoveToApplicationsFolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0C8B000000000000000010 /* MoveToApplicationsFolder.swift */; };
@@ -671,6 +679,12 @@
 		AA0C8A000000000000000001 /* AXCallScheduler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AXCallScheduler.swift; sourceTree = "<group>"; };
 		AA0C8A0000000000000000B1 /* CGSCallScheduler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CGSCallScheduler.swift; sourceTree = "<group>"; };
 		AA0C8A0000000000000000B2 /* ProcessCallScheduler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProcessCallScheduler.swift; sourceTree = "<group>"; };
+		BB7AB5000000000000000002 /* BrowserTabs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BrowserTabs.swift; sourceTree = "<group>"; };
+		BB7AB5000000000000000003 /* BrowserTabsTestable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BrowserTabsTestable.swift; sourceTree = "<group>"; };
+		BB7AB5000000000000000004 /* BrowserTabsTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BrowserTabsTests.swift; sourceTree = "<group>"; };
+		BB7AB5000000000000000008 /* OrcaTabs.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OrcaTabs.swift; sourceTree = "<group>"; };
+		BB7AB5000000000000000009 /* OrcaTabsTestable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OrcaTabsTestable.swift; sourceTree = "<group>"; };
+		BB7AB500000000000000000A /* OrcaTabsTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OrcaTabsTests.swift; sourceTree = "<group>"; };
 		AA0C8B000000000000000002 /* UsageStats.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UsageStats.swift; sourceTree = "<group>"; };
 		AA0C8B000000000000000004 /* UsageStatsTestable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UsageStatsTestable.swift; sourceTree = "<group>"; };
 		AA0C8B000000000000000010 /* MoveToApplicationsFolder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MoveToApplicationsFolder.swift; sourceTree = "<group>"; };
@@ -1209,6 +1223,12 @@
 		8845C83ADBF5A4583DC42E6F /* state */ = {
 			isa = PBXGroup;
 			children = (
+				BB7AB5000000000000000002 /* BrowserTabs.swift */,
+				BB7AB5000000000000000003 /* BrowserTabsTestable.swift */,
+				BB7AB5000000000000000004 /* BrowserTabsTests.swift */,
+				BB7AB5000000000000000008 /* OrcaTabs.swift */,
+				BB7AB5000000000000000009 /* OrcaTabsTestable.swift */,
+				BB7AB500000000000000000A /* OrcaTabsTests.swift */,
 				D04BACD976030676FD0761D5 /* Windows.swift */,
 				D04BA00000000000C0DE0030 /* WindowThumbnails.swift */,
 				D04BA015A45DE7AFDC9794FE /* Window.swift */,
@@ -2327,6 +2347,10 @@
 				BF0C8CEBBC2E851D16FF4757 /* CustomRecorderControlTests.swift in Sources */,
 				5FA004000000000000000004 /* ProTransitionManagerTestable.swift in Sources */,
 				5FA004000000000000000005 /* ProTransitionTests.swift in Sources */,
+				BB7AB5000000000000000006 /* BrowserTabsTestable.swift in Sources */,
+				BB7AB5000000000000000007 /* BrowserTabsTests.swift in Sources */,
+				BB7AB500000000000000000D /* OrcaTabsTestable.swift in Sources */,
+				BB7AB500000000000000000E /* OrcaTabsTests.swift in Sources */,
 				AA0C8B000000000000000005 /* UsageStatsTestable.swift in Sources */,
 				5FA004000000000000000007 /* UsageStatsMessageTests.swift in Sources */,
 				5F1CE0010000000000000002 /* Clock.swift in Sources */,
@@ -2532,6 +2556,10 @@
 				AA0C8B000000000000000001 /* UsageStats.swift in Sources */,
 				AA0C8B000000000000000011 /* MoveToApplicationsFolder.swift in Sources */,
 				AA0C8B000000000000000003 /* UsageStatsTestable.swift in Sources */,
+				BB7AB5000000000000000001 /* BrowserTabs.swift in Sources */,
+				BB7AB5000000000000000005 /* BrowserTabsTestable.swift in Sources */,
+				BB7AB500000000000000000B /* OrcaTabs.swift in Sources */,
+				BB7AB500000000000000000C /* OrcaTabsTestable.swift in Sources */,
 				BF0C83578F7292F307E30751 /* PopupButtonLikeSystemSettings.swift in Sources */,
 				5F04852E2F09AC9700235D4A /* WindowCaptureEvents.swift in Sources */,
 				1C961F9CF4F1BEDF04ACAEE0 /* Switch.swift in Sources */,

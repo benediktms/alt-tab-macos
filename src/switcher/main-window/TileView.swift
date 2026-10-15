@@ -305,7 +305,7 @@ class TileView: FlippedView {
             isHidden: element.isHidden && !Preferences.hideStatusIcons,
             isFullscreen: element.isFullscreen && !Preferences.hideStatusIcons,
             isMinimized: element.isMinimized && !Preferences.hideStatusIcons,
-            showSpace: !(element.isWindowlessApp || Spaces.isSingleSpace() || Preferences.hideSpaceNumberLabels || {
+            showSpace: !(element.isWindowlessApp || element is VirtualTabWindow || Spaces.isSingleSpace() || Preferences.hideSpaceNumberLabels || {
                 let shortcutIndex = SwitcherSession.current?.shortcutIndex ?? 0
                 return Preferences.spacesToShow[shortcutIndex] == .visible && (
                     NSScreen.screens.count < 2 || Preferences.screensToShow[shortcutIndex] == .showingAltTab

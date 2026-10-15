@@ -122,10 +122,22 @@ struct FocusIntentPolicy {
     /// A focus that this policy cannot re-assert took over: `Window.focus()` also lands on AltTab's own
     /// window and on a windowless app, and neither is a wid this can front. Pending operations still have to
     /// stop, so they are superseded with nothing to repair to.
-    mutating func supersede() {
+    /// Returns the token of this supersession: `isNewest` tells later-completing work (an IPC reply) whether another
+    /// focus request or supersession followed.
+    @discardableResult
+    mutating func supersede() -> FocusGeneration {
+        let generation = FocusGeneration(rawValue: nextGeneration)
+        nextGeneration += 1
         current = nil
         awaited = nil
         repairedAt = nil
+        return generation
+    }
+
+    /// Has nothing been requested or superseded since `generation` was issued? Unlike `mayProceed`, it works for a
+    /// superseded token, which has no intent to compare.
+    func isNewest(_ generation: FocusGeneration) -> Bool {
+        generation.rawValue + 1 == nextGeneration
     }
 
     /// May the operation stamped `generation` run its next step?
@@ -171,8 +183,13 @@ class FocusIntents {
         withPolicy { $0.request(wid: wid, pid: pid, now: ProcessInfo.processInfo.systemUptime) }
     }
 
-    func supersede() {
+    @discardableResult
+    func supersede() -> FocusGeneration {
         withPolicy { $0.supersede() }
+    }
+
+    func isNewest(_ generation: FocusGeneration) -> Bool {
+        withPolicy { $0.isNewest(generation) }
     }
 
     func mayProceed(_ generation: FocusGeneration) -> Bool {

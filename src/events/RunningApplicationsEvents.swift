@@ -25,6 +25,8 @@ class RunningApplicationsEvents {
         if let quit {
             Logger.debug { "quit:\(quit.map { $0.debugId() })" }
             Applications.removeRunningApplications(quit)
+            BrowserTabs.applicationsQuit(quit)
+            OrcaTabs.applicationsQuit(quit)
         }
     }
 

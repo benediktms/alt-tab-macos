@@ -99,7 +99,7 @@ class TrackedWindowStateBridge {
     /// the `Spaces` topology, the frontmost pid.
     static func snapshot() -> TrackedWindowState {
         var state = TrackedWindowState()
-        state.windows = Windows.list.map { modelWindow($0) }
+        state.windows = Windows.list.compactMap { $0 is VirtualTabWindow ? nil : modelWindow($0) }
         // `isActive` is DERIVED, never read off `NSRunningApplication`. Its getter is a full LaunchServices
         // dynamic-property refresh (mach round trip + sysctl + CFString building, allocating throughout), and
         // this loop ran one per app on EVERY dispatch, and a title/tab refresh dispatches once per window,
@@ -191,6 +191,7 @@ class TrackedWindowStateBridge {
                     w.application.focusedWindow = w
                     App.checkIfShortcutsShouldBeDisabled(w, nil)
                     WindowThumbnails.captureFocusedInBackground(w)
+                    OrcaTabs.windowFocused(w)
                 }
             case .refreshUi(let wids, let onlyWhileSwitcherOpen):
                 if !onlyWhileSwitcherOpen || SwitcherSession.isActive {

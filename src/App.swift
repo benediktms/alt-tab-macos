@@ -414,6 +414,8 @@ class App: AppCenterApplication {
             // in its final state. No-op on first summon (panel was orderOut'd with alpha=0).
             TilesPanel.shared.alphaValue = 0
             ProTransitionManager.shared.onSwitcherShown()
+            // after the visible work: the tabs only show once the user types
+            DispatchQueue.main.async { BrowserTabs.refresh(); OrcaTabs.refresh(); OrcaTabs.captureSelected() }
             let shouldStartInSearchMode = Preferences.effectiveShortcutStyle(shortcutIndex) == .searchOnRelease
             TilesView.startSearchSession(shouldStartInSearchMode)
             if shouldStartInSearchMode {

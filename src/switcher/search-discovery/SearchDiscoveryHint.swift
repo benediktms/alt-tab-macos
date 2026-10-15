@@ -182,7 +182,7 @@ final class SearchDiscoveryHint {
         case .trialExpired, .proExpired: access = .locked
         }
         return SearchDiscoveryPolicy.Context(access: access,
-            windowCount: Windows.list.count { $0.shouldShowTheUser && !$0.isWindowlessApp },
+            windowCount: Windows.list.count { $0.shouldShowTheUser && !$0.isWindowlessApp && !($0 is VirtualTabWindow) },
             enabled: CachedUserDefaults.bool("showSearchHint"), optedOut: ProTransitionManager.shared.userOptedOut,
             searchActive: TilesView.isSearchModeOn,
             blockedByOtherUI: isOtherUIBlocking || ProTransitionManager.shared.hasPendingPrompt,

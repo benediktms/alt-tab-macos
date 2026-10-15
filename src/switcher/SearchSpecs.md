@@ -32,6 +32,7 @@ and several regressions from real user screenshots — because the ranking is ea
   scattered characters and random noise are rejected (the ky/Kyoto/Slack regressions).
 - **Single/two-char queries** don't use fuzzy. **Empty/whitespace** queries match nothing.
 - App-name matches surface even when the title doesn't, and rank above title matches at the same tier.
+- Browser and Orca tabs (`VirtualTabWindow`) match a secondary text (the URL, or "repo branch") in place of the app name; see `state/BrowserTabsSpecs.md`.
 
 ## Test scenarios
 

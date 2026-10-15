@@ -49,7 +49,20 @@ class Windows {
     private static var shouldRestoreDefaultSelectionOnSearchClear = false
 
     static func shouldDisplay(_ window: Window) -> Bool {
-        window.shouldShowTheUser && Search.matches(window, query: (SwitcherSession.current?.searchQuery ?? ""))
+        let query = SwitcherSession.current?.searchQuery ?? ""
+        if window is VirtualTabWindow && Search.normalizedQuery(query).isEmpty { return false }
+        return window.shouldShowTheUser && Search.matches(window, query: query)
+    }
+
+    /// Tabs live outside the reducer's books: no wid, no `lastFocusOrder` slot.
+    static func replaceTabs<T: VirtualTabWindow>(_ kind: T.Type, with tabs: [T]) {
+        let previous = list.count { $0 is T }
+        list.removeAll { $0 is T }
+        list.append(contentsOf: tabs)
+        guard previous > 0 || !tabs.isEmpty else { return }
+        TilesView.growPoolToCoverWindows()
+        sort()
+        App.refreshOpenUiAfterExternalEvent([])
     }
 
     static func updateSearchQuery(_ query: String) {
@@ -128,7 +141,7 @@ class Windows {
     static func refreshWhichWindowsToShowTheUser() {
         guard Preferences.showsOneWindowPerApp() else { return }
         let current = AttentionEngine.currentUserContext
-        for (pid, windows) in Dictionary(grouping: list, by: { $0.application.pid }) {
+        for (pid, windows) in Dictionary(grouping: list.filter { !($0 is VirtualTabWindow) }, by: { $0.application.pid }) {
             let eligible = windows.filter { $0.shouldShowTheUser }
             let currentWid = current.pid == pid ? current.wid : nil
             let lastAttendedWid = AttentionEngine.lastAttendedWindow(pid)
@@ -161,6 +174,8 @@ class Windows {
     }
 
     static func shouldShowTheUser(_ window: Window, _ f: WindowFilters) -> Bool {
+        // Tabs are not filtered by Space, screen or app: a search must reach every open tab.
+        if window is VirtualTabWindow { return true }
         guard !window.tracked.isClosingOffScreen(appHidden: window.application.isHidden) else { return false }
         // `isOnPreferredScreen` is the one irreducibly OS-coupled fact (touches `Spaces.screenSpacesMap` +
         // multi-screen quartz math); passed as `@autoclosure` so it's only evaluated if the cheaper
@@ -602,7 +617,9 @@ class Windows {
             window.semanticSurface = semantic
             window.axTitleIsEmpty = !semantic.hasTitle
             // on any window event, we take the opportunity to refresh all window attributes
+            let previousTitle = window.title
             window.updateFromAxAttributes(semantic.title, raw.bounds.size, raw.bounds.origin, isFullscreen, isMinimized)
+            if window.title != previousTitle { BrowserTabs.activeTabMayHaveChanged(window) }
             logAdmission(decision, raw, app)
             return (window, false)
         }
@@ -772,7 +789,7 @@ class Windows {
     }
 
     static func appendWindow(_ window: Window) {
-        window.lastFocusOrder = list.count
+        window.lastFocusOrder = list.count { !($0 is VirtualTabWindow) }
         list.append(window)
         bumpAppWindowSetVersion(window.application.pid)
         if let wid = window.cgWindowId {
@@ -860,6 +877,7 @@ class Windows {
             if w.application.focusedWindow?.cgWindowId == w.cgWindowId {
                 w.application.focusedWindow = nil
             }
+            BrowserTabs.windowClosed(w)
             if let wid = w.cgWindowId {
                 Applications.invalidateWindowStateReads([wid])
                 AxObserverRegistry.noteTrackedElement(pid: w.application.pid, wid: wid, element: nil)
@@ -873,8 +891,11 @@ class Windows {
                 // per-window events that opt-in carries.
             }
         }
-        let toRemove = windows.map { $0.lastFocusOrder }
+        // Native windows are removed by their `lastFocusOrder` slot and the rest shift down over it. Virtual tabs
+        // have no slot (they all share one placeholder value), so they leave by identity and never shift.
+        let toRemove = windows.filter { !($0 is VirtualTabWindow) }.map { $0.lastFocusOrder }
         list.removeAll { w in
+            if w is VirtualTabWindow { return windows.contains { $0 === w } }
             if toRemove.contains(w.lastFocusOrder) {
                 return true
             }
